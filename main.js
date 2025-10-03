@@ -19,27 +19,22 @@ app.use((req, res, next) => {
 });
 // Load instructions from file
 function loadInstructions(state = 'default') {
-    let filePath;
-    let instructionsPath;
-    switch (rank) {
-        case 'beginner':
-            instructionsRank = path.join('instructions_beginner.txt');
-            break;
-        case 'advanced':
-            instructionsRank = path.join('instructions_advanced.txt');
-            break;
-    }
+    let instructionsPath = "../instructions_beginner.txt";
     
     switch (state) {
         case 'Earth Json':
-            instructionsPath = path.join(__dirname, 'instructions_Earth.txt');
+            instructionsPath = path.join(__dirname , 'instructions_Earth.txt');
             break;
         case 'Search cosmic':
-            instructionsPath = path.join(__dirname, 'instructions_cosmic.txt');
+            instructionsPath = path.join(__dirname , 'instructions_cosmic.txt');
             break;
-        default:
-            instructionsPath = path.join(__dirname, instructionsRank, 'instructions.txt');
+        case 'beginner':
+            instructionsPath = path.join(__dirname , 'instructions_beginner.txt');
             break;
+        case 'advanced':
+            instructionsPath = path.join(__dirname , 'instructions_advanced.txt');
+            break;
+
     }
 
     try {
@@ -83,12 +78,22 @@ const genAI = new GoogleGenerativeAI(API_KEY);
 let systemInstructions = loadInstructions();
 
 // Gemini chat function - accepts per-request system instructions
-async function chat(prompt, systemInstructions = '') {
+async function chat(prompt, systemInstructions = '', mode = 'default') {
     try {
+        let generationConfig = {
+            temperature: 0.7,
+        };
+
+        // Apply token constraints for advanced mode
+        if (mode === 'advanced') {
+            generationConfig.maxOutputTokens = 250; // Constrain to 1000 tokens for advanced mode
+            generationConfig.temperature = 0.3; // Lower temperature for more focused responses
+        }
 
         const model = genAI.getGenerativeModel({
             model: 'gemini-2.0-flash-exp',
-            systemInstruction: systemInstructions
+            systemInstruction: systemInstructions,
+            generationConfig: generationConfig
         });
 
         const result = await model.generateContent(prompt);
@@ -132,9 +137,17 @@ app.post('/chat', async (req, res) => {
             prompt = prompt.substring('search cosmic'.length).trim();
             perRequestInstructions = loadInstructions('Search cosmic');
             modeUsed = 'Search cosmic';
+        } else if (prompt.toLowerCase().startsWith('beginner mode')) {
+            prompt = prompt.substring('beginner mode'.length).trim();
+            perRequestInstructions = loadInstructions('beginner');
+            modeUsed = 'beginner';
+        } else if (prompt.toLowerCase().startsWith('advanced mode')) {
+            prompt = prompt.substring('advanced mode'.length).trim();
+            perRequestInstructions = loadInstructions('advanced');
+            modeUsed = 'advanced';
         }
 
-        const responseText = await chat(prompt, perRequestInstructions);
+        const responseText = await chat(prompt, perRequestInstructions, modeUsed);
         const cleaned = cleanLLMResponse(responseText, modeUsed);
         res.json({ response: cleaned });
     } catch (error) {

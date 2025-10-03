@@ -23,13 +23,13 @@ function loadInstructions(state = 'default') {
     let instructionsPath;
     switch (state) {
         case 'Earth Json':
-            instructionsPath = path.join(__dirname, '..', 'instructions_Earth.txt');
+            instructionsPath = path.join(__dirname, 'instructions_Earth.txt');
             break;
         case 'Search cosmic':
-            instructionsPath = path.join(__dirname, '..', 'instructions_cosmic.txt');
+            instructionsPath = path.join(__dirname, 'instructions_cosmic.txt');
             break;
         default:
-            instructionsPath = path.join(__dirname, '..', 'instructions.txt');
+            instructionsPath = path.join(__dirname, 'instructions.txt');
             break;
     }
 

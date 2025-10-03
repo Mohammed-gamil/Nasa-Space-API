@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmos Canvas - Demo Client</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f4d 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px 0;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            color: #8892b0;
+            font-size: 1.1em;
+        }
+
+        .chat-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        #promptInput {
+            flex: 1;
+            padding: 15px;
+            font-size: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        #promptInput:focus {
+            border-color: #4facfe;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        #promptInput::placeholder {
+            color: #8892b0;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            color: #0a0e27;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(79, 172, 254, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .quick-questions {
+            margin-bottom: 20px;
+        }
+
+        .quick-questions h3 {
+            margin-bottom: 15px;
+            color: #4facfe;
+            font-size: 1.1em;
+        }
+
+        .question-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .question-btn {
+            padding: 8px 16px;
+            font-size: 14px;
+            background: rgba(79, 172, 254, 0.2);
+            color: #4facfe;
+            border: 1px solid rgba(79, 172, 254, 0.4);
+        }
+
+        .question-btn:hover {
+            background: rgba(79, 172, 254, 0.3);
+            color: #fff;
+        }
+
+        /* Mode Selection Buttons */
+        .mode-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .mode-btn {
+            padding: 10px 16px;
+            border: 2px solid rgba(255, 255, 255, 0.12);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .mode-btn:hover {
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateY(-2px);
+        }
+
+        .mode-btn.active {
+            background: rgba(79, 172, 254, 0.18);
+            border-color: rgba(79, 172, 254, 0.8);
+            box-shadow: 0 6px 18px rgba(79, 172, 254, 0.12);
+            color: #eaf7ff;
+        }
+
+        #response {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 200px;
+            max-height: 500px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            line-height: 1.8;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #4facfe;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid rgba(79, 172, 254, 0.3);
+            border-top: 3px solid #4facfe;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #ff6b6b;
+        }
+
+        .success {
+            color: #51cf66;
+        }
+
+        pre.success {
+            background: rgba(0,0,0,0.35);
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            line-height: 1.5;
+            color: #e6ffed;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #8892b0;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 600px) {
+            .input-group {
+                flex-direction: column;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌌 Cosmos Canvas</h1>
+            <p class="subtitle">NASA's Gigapixel Explorer AI Assistant</p>
+        </header>
+
+        <div class="chat-container">
+            <!-- Mode Selector -->
+            <div class="mode-selector" style="margin-bottom:18px;">
+                <button class="mode-btn active" id="modeDefault" onclick="setMode('default')">🌌 Default</button>
+                <button class="mode-btn" id="modeEarth" onclick="setMode('Earth Json')">🌍 Earth Methods</button>
+                <button class="mode-btn" id="modeCosmic" onclick="setMode('Search cosmic')">🔭 Search Cosmic</button>
+            </div>
+
+            <div class="quick-questions">
+                <h3>✨ Quick Questions</h3>
+                <div class="question-buttons">
+                    <button class="question-btn" onclick="askQuestion('Tell me about Mars')">🔴 Mars</button>
+                    <button class="question-btn" onclick="askQuestion('Tell me about Jupiter')">🪐 Jupiter</button>
+                    <button class="question-btn" onclick="askQuestion('Tell me about the Andromeda galaxy')">🌌 Andromeda</button>
+                    <button class="question-btn" onclick="askQuestion('Tell me about Orion constellation')">⭐ Orion</button>
+                    <button class="question-btn" onclick="askQuestion('Tell me about a black hole')">⚫ Black Hole</button>
+                    <button class="question-btn" onclick="askQuestion('Tell me about the Moon')">🌙 Moon</button>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    id="promptInput" 
+                    placeholder="Ask about any space object... 🚀"
+                    onkeypress="handleKeyPress(event)"
+                />
+                <button id="sendBtn" onclick="sendMessage()">Send 🚀</button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Exploring the cosmos...</p>
+            </div>
+
+            <div id="response">
+                <p style="color: #8892b0; text-align: center;">
+                    Ask me about any star, planet, constellation, galaxy, nebula, or black hole! 🌟
+                </p>
+            </div>
+        </div>
+
+        <footer>
+            <p>Powered by Gemini AI • Built for NASA Space Apps Challenge 2025</p>
+        </footer>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+
+        async function sendMessage() {
+            const input = document.getElementById('promptInput');
+            const prompt = input.value.trim();
+            
+            if (!prompt) return;
+
+            const responseDiv = document.getElementById('response');
+            const loading = document.getElementById('loading');
+            const sendBtn = document.getElementById('sendBtn');
+
+            // Show loading
+            loading.classList.add('active');
+            responseDiv.style.display = 'none';
+            sendBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ prompt })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const cleaned = sanitizeResponse(data.response);
+                    responseDiv.innerHTML = `<pre class="success">${escapeHtml(cleaned)}</pre>`;
+                } else {
+                    responseDiv.innerHTML = `<div class="error">Error: ${escapeHtml(data.error || 'Unknown error')}</div>`;
+                }
+            } catch (error) {
+                responseDiv.innerHTML = `<div class="error">Failed to connect to server. Make sure the server is running on ${API_URL}</div>`;
+            } finally {
+                loading.classList.remove('active');
+                responseDiv.style.display = 'block';
+                sendBtn.disabled = false;
+            }
+        }
+
+        function askQuestion(question) {
+            document.getElementById('promptInput').value = question;
+            sendMessage();
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function sanitizeResponse(text) {
+            if (!text) return '';
+
+            // Remove leading/trailing code block markers (```json, ```, etc.)
+            let cleaned = text.trim();
+            // Remove leading code block marker
+            cleaned = cleaned.replace(/^```json\s*|^```\s*/i, '');
+            // Remove trailing code block marker
+            cleaned = cleaned.replace(/```\s*$/i, '');
+
+            // Remove any remaining fenced code blocks inside (paranoia)
+            cleaned = cleaned.replace(/```[\s\S]*?```/g, match => {
+                return match.replace(/^```\w*\s*/i, '').replace(/```$/, '');
+            });
+
+            cleaned = cleaned.trim();
+
+            // Apply Earth Json mode trimming (first 7, last 3 chars) as fallback
+            if (typeof currentMode !== 'undefined' && currentMode === 'Earth Json') {
+                if (cleaned.length >= 10) {
+                    cleaned = cleaned.slice(7, -3);
+                } else {
+                    cleaned = '';
+                }
+            }
+
+            try {
+                const obj = JSON.parse(cleaned);
+                return JSON.stringify(obj, null, 2);
+            } catch (e) {
+                return cleaned;
+            }
+        }
+
+        // Test connection on load
+        window.addEventListener('load', async () => {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                console.log('✅ Connected to Cosmos Canvas:', data.message);
+            } catch (error) {
+                console.error('❌ Failed to connect to server:', error);
+                document.getElementById('response').innerHTML = 
+                    `<div class="error">⚠️ Server not running. Please start the server first:<br><br>
+                    <strong>Python:</strong> uvicorn main:app --reload<br>
+                    <strong>JavaScript:</strong> cd "Java script" && npm start</div>`;
+            }
+        });
+
+        // Mode handling
+        let currentMode = 'default';
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            if (mode === 'default') document.getElementById('modeDefault').classList.add('active');
+            if (mode === 'Earth Json') document.getElementById('modeEarth').classList.add('active');
+            if (mode === 'Search cosmic') document.getElementById('modeCosmic').classList.add('active');
+        }
+
+        // wrap sendMessage to include mode-specific prefixes
+        const originalSendMessage = sendMessage;
+        async function sendMessage() {
+            const input = document.getElementById('promptInput');
+            let prompt = input.value.trim();
+            if (!prompt) return;
+
+            // Prefix the prompt based on mode so server can pick correct instruction file
+            if (currentMode === 'Earth Json') {
+                prompt = `use earth methods ${prompt}`;
+            } else if (currentMode === 'Search cosmic') {
+                prompt = `search cosmic ${prompt}`;
+            }
+
+            const responseDiv = document.getElementById('response');
+            const loading = document.getElementById('loading');
+            const sendBtn = document.getElementById('sendBtn');
+
+            // Show loading
+            loading.classList.add('active');
+            responseDiv.style.display = 'none';
+            sendBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_URL}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ prompt })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const cleaned = sanitizeResponse(data.response);
+                    responseDiv.innerHTML = `<pre class="success">${escapeHtml(cleaned)}</pre>`;
+                } else {
+                    responseDiv.innerHTML = `<div class="error">Error: ${escapeHtml(data.error || 'Unknown error')}</div>`;
+                }
+            } catch (error) {
+                responseDiv.innerHTML = `<div class="error">Failed to connect to server. Make sure the server is running on ${API_URL}</div>`;
+            } finally {
+                loading.classList.remove('active');
+                responseDiv.style.display = 'block';
+                sendBtn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

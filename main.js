@@ -21,6 +21,15 @@ app.use((req, res, next) => {
 function loadInstructions(state = 'default') {
     let filePath;
     let instructionsPath;
+    switch (rank) {
+        case 'beginner':
+            instructionsRank = path.join('instructions_beginner.txt');
+            break;
+        case 'advanced':
+            instructionsRank = path.join('instructions_advanced.txt');
+            break;
+    }
+    
     switch (state) {
         case 'Earth Json':
             instructionsPath = path.join(__dirname, 'instructions_Earth.txt');
@@ -29,7 +38,7 @@ function loadInstructions(state = 'default') {
             instructionsPath = path.join(__dirname, 'instructions_cosmic.txt');
             break;
         default:
-            instructionsPath = path.join(__dirname, 'instructions.txt');
+            instructionsPath = path.join(__dirname, instructionsRank, 'instructions.txt');
             break;
     }
 

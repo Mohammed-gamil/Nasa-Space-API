@@ -81,12 +81,12 @@ let systemInstructions = loadInstructions();
 async function chat(prompt, systemInstructions = '', mode = 'default') {
     try {
         let generationConfig = {
-            temperature: 0.7,
+            temperature: 0,
         };
 
         // Apply token constraints for advanced mode
         if (mode === 'advanced') {
-            generationConfig.maxOutputTokens = 250; // Constrain to 1000 tokens for advanced mode
+            generationConfig.maxOutputTokens = 500; // Constrain to 1000 tokens for advanced mode
             generationConfig.temperature = 0.3; // Lower temperature for more focused responses
         }
 
